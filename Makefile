@@ -173,6 +173,7 @@ serve: pull-eval-image
 	docker run \
 		-it \
 		--rm \
+		--runtime=nvidia \
 		--user 13011:13011 \
 		-p 8000:8000 \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
