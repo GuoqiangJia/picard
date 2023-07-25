@@ -1,4 +1,5 @@
 GIT_HEAD_REF := $(shell git rev-parse HEAD)
+STATIC_HEAD_REF := 6a252386bed6d4233f0f13f4562d8ae8608e7445
 
 BASE_IMAGE := pytorch/pytorch:1.9.0-cuda11.1-cudnn8-devel
 
@@ -100,7 +101,7 @@ build-eval-image:
 
 .PHONY: pull-eval-image
 pull-eval-image:
-	docker pull tscholak/$(EVAL_IMAGE_NAME):6a252386bed6d4233f0f13f4562d8ae8608e7445
+	docker pull tscholak/$(EVAL_IMAGE_NAME):$(STATIC_HEAD_REF)
 
 .PHONY: train
 train: pull-train-image
@@ -147,7 +148,7 @@ eval: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
-		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		tscholak/$(EVAL_IMAGE_NAME):$(STATIC_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_seq2seq.py configs/eval.json"
 
 .PHONY: eval_cosql
@@ -163,7 +164,7 @@ eval_cosql: pull-eval-image
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
 		--mount type=bind,source=$(BASE_DIR)/wandb,target=/app/wandb \
-		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		tscholak/$(EVAL_IMAGE_NAME):$(STATIC_HEAD_REF) \
 		/bin/bash -c "python seq2seq/run_seq2seq.py configs/eval_cosql.json"
 
 .PHONY: serve
@@ -173,12 +174,13 @@ serve: pull-eval-image
 	docker run \
 		-it \
 		--rm \
+		--runtime=nvidia \
 		--user 13011:13011 \
 		-p 8000:8000 \
 		--mount type=bind,source=$(BASE_DIR)/database,target=/database \
 		--mount type=bind,source=$(BASE_DIR)/transformers_cache,target=/transformers_cache \
 		--mount type=bind,source=$(BASE_DIR)/configs,target=/app/configs \
-		tscholak/$(EVAL_IMAGE_NAME):$(GIT_HEAD_REF) \
+		tscholak/$(EVAL_IMAGE_NAME):$(STATIC_HEAD_REF) \
 		/bin/bash -c "python seq2seq/serve_seq2seq.py configs/serve.json"
 
 .PHONY: prediction_output
